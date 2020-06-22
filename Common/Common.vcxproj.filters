@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="struct">
+      <UniqueIdentifier>{17eeacd7-dff9-4af5-9bc7-a170651eb65a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -27,10 +30,58 @@
     <ClInclude Include="Common.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="debug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="msg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="list.h">
+      <Filter>struct</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>struct</Filter>
+    </ClInclude>
+    <ClInclude Include="comm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="about.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="deal.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="memoryManage.h">
+      <Filter>struct</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Common.cpp">
+    <ClCompile Include="debug.c">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="dummy_main.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="msg.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="list.c">
+      <Filter>struct</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.c">
+      <Filter>struct</Filter>
+    </ClCompile>
+    <ClCompile Include="comm.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="deal.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="memoryManage.c">
+      <Filter>struct</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
