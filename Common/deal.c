@@ -68,7 +68,21 @@ int do_buf_send(int action, void* pv)
 
 		case SEND_DATA_ACTION_GET: // 取得缓冲区
 		{
-
+			int i;
+			for (i = 0; i < SEND_DATA_SIZE; i++)
+			{
+				for (i = 0; i < SEND_DATA_SIZE; i++)
+				{
+					if (send_data[i]->flag == SEND_DATA_TYPE_NOTUSED) 
+					{
+						send_data[i]->flag = SEND_DATA_TYPE_USED;
+						retval = (int)send_data[i];
+						goto _exit_dbs;
+					}
+				}
+				retval = 0;
+				goto _exit_dbs;
+			}
 		}
 		case SEND_DATA_ACTION_RETURN:// 归还缓冲区
 		{
@@ -266,7 +280,6 @@ unsigned int __stdcall thread_write(void* pv)
 		if (comm.fCommOpened == FALSE || msg.hComPort == INVALID_HANDLE_VALUE) {
 			return 0;
 		}
-
 		// 从管道里将要写的数据读取出来保存到psd中
 		bRet = ReadFile(deal.thread.hPipeRead, (void*)&psd, 4, &nRead, NULL);
 		if (bRet == FALSE)
@@ -288,6 +301,7 @@ unsigned int __stdcall thread_write(void* pv)
 		nWrittenData = 0;
 		while (nWrittenData < psd->data_size)
 		{
+			// 写数据到串口设备
 			bRet = WriteFile(msg.hComPort, &psd->data[0] + nWrittenData, psd->data_size - nWrittenData, &nWritten, NULL);
 			if (comm.fCommOpened == FALSE || msg.hComPort == INVALID_HANDLE_VALUE)
 			{
@@ -343,13 +357,13 @@ int get_edit_data(int fmt, void** ppv, size_t* size)
 
 	}
 	else { // 字符方式
-		len = utils.wstr2lstr(buff);
+		len = utils.wstr2lstr(buff); // \r\n ---> \n
 		--len;
 
 		if (comm.data_fmt_ignore_return) { // 忽略回车
 			len = utils.remove_string_return(buff);
 		}
-		if (comm.data_fmt_use_escape_char) { // 忽略转义
+		if (comm.data_fmt_use_escape_char) { // 解析转义字符
 			unsigned int ret = utils.parse_string_escape_char(buff);
 			if (ret & 0x80000000) // 数据量小于 0x80000000
 			{
@@ -380,6 +394,7 @@ int get_edit_data(int fmt, void** ppv, size_t* size)
 		*ppv = buff;
 	}
 	*size = len;
+
 	return 1;
 }
 
@@ -398,18 +413,14 @@ void* do_send(int action)
 	}
 
 	// 取数据 从编辑框
-	if (action == 0)
+	if (action == 0) // 手动
 	{
 		if (get_edit_data(comm.data_fmt_send, &pv, &size)) {
 			psd = make_send_data(0, pv, size); // 将取出的数据 构建SEND_DATA格式
 			memory.free_mem((void**)&pv, "do_send_0");
 			if (psd == NULL) return NULL;
-			if (action == 0) {
-				// 添加发送包
+			if (action == 0)
 				add_send_packet(psd);
-			}
-			else if (action == 1)
-				return psd;
 		}
 		return NULL;
 	}
@@ -421,17 +432,19 @@ void* do_send(int action)
 void add_send_packet(SEND_DATA* psd)
 {
 	DWORD nWritten = 0;
-	if (WriteFile(deal.thread.hPipeWrite, &psd, 4, &nWritten, NULL) && nWritten == sizeof(psd)) {
+	// 写数据到管道  将内存地址写到管道中
+	if (WriteFile(deal.thread.hPipeWrite, &psd, 4, &nWritten, NULL) && nWritten == sizeof(psd)) 
 		InterlockedExchangeAdd((volatile long*)&comm.cchNotSend, psd->data_size);
-	}
-	else {
+	else 
 		utils.msgerr(NULL, "添加发送数据包时出错");
-	}
+
 	update_status(NULL);
 }
+
 // 从内存构建SEND_DATA数据包
 // fmt data数据的格式
-// 0 -- 16进制或字符   
+// 0 -- 16进制或字符    -----  手动发送
+// 1 -- 
 // data -- 指向普通内存
 // size -- 数据大小
 SEND_DATA* make_send_data(int fmt, void* data, size_t size)
@@ -439,45 +452,44 @@ SEND_DATA* make_send_data(int fmt, void* data, size_t size)
 	SEND_DATA* psd = NULL;
 	int is_buffer_enough = 0;
 
-	if (fmt == 0)
+	if (fmt == 0) // 手动发送
 	{
-
-	}
-	else if(fmt == 1)
-	{
-		is_buffer_enough = size <= sizeof(SEND_DATA);
+		is_buffer_enough = size <= sizeof(((SEND_DATA*)NULL)->data);
 		if (is_buffer_enough) {
-			// 从未发送的缓冲取数据
 			psd = (SEND_DATA*)deal.do_buf_send(SEND_DATA_ACTION_GET, NULL);
-			// 获取当前数据包的大小
-			// 获取data的起始地址
-			// sizeof(SEND_DATA) - sizeof(((SEND_DATA*)NULL)->data)  
 			if (psd) psd->cb = sizeof(SEND_DATA) - sizeof(((SEND_DATA*)NULL)->data) + size;
 		}
-		else
+		else // 扩容
 		{
-			psd = (SEND_DATA*)GET_MEM(size);
-			if (psd)
-				psd->cb = size;
+			int total = sizeof(SEND_DATA) + size - sizeof(((SEND_DATA*)NULL)->data);
+			psd = (SEND_DATA*)GET_MEM(total);
+			if (psd) psd->cb = total;
 		}
+	}
+	else if(fmt == 1) // 自动发送
+	{
+
 	}
 	
 	if (!psd)
 	{
-		deal.cancel_auto_send(0);
+	/*	deal.cancel_auto_send(0);
 		utils.msgbox(msg.hWndMain, MB_ICONEXCLAMATION, "请等等...", "发送速度过快,内部发送缓冲区没有空闲!\n\n"
 			"如果已开启自动发送,则自动发送被取消!");
-		return NULL;
+		return NULL;*/
 	}
 
 	if(fmt == 0)
 	{ 
-
+		memcpy(psd->data, data, size);
+		psd->data_size = size;
+		// 正在使用  发送过后立马释放
+		psd->flag = is_buffer_enough ? SEND_DATA_TYPE_USED : SEND_DATA_TYPE_MUSTFREE;
 	}
 	else if (fmt == 1)
 	{
-		memcpy(psd, deal.autoptr, ((SEND_DATA*)deal.autoptr)->cb);
-		psd->flag = is_buffer_enough ? SEND_DATA_TYPE_AUTO_USED : SEND_DATA_TYPE_AUTO_MUSTFREE;
+	/*	memcpy(psd, deal.autoptr, ((SEND_DATA*)deal.autoptr)->cb);
+		psd->flag = is_buffer_enough ? SEND_DATA_TYPE_AUTO_USED : SEND_DATA_TYPE_AUTO_MUSTFREE;*/
 	}
 	return psd;
 }

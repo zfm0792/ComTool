@@ -256,8 +256,25 @@ int	load_from_file(void)
 {
 	return 0;
 }
+// 取得当前发送、接收数据的格式
 void set_data_fmt(void)
 {
+	// 忽略回车换行
+	comm.data_fmt_ignore_return = IsDlgButtonChecked(msg.hWndMain, IDC_CHECK_IGNORE_RETURN);
+	// 接收16进制
+	comm.data_fmt_send = IsDlgButtonChecked(msg.hWndMain, IDC_RADIO_SEND_HEX);
+	// 发送16进制
+	comm.data_fmt_recv = IsDlgButtonChecked(msg.hWndMain, IDC_RADIO_RECV_HEX);
+	// 使用转义字符
+	comm.data_fmt_use_escape_char = IsDlgButtonChecked(msg.hWndMain, IDC_CHECK_USE_ESCAPE_CHAR);
+
+	EnableWindow(GetDlgItem(msg.hWndMain, IDC_CHECK_IGNORE_RETURN), comm.data_fmt_send == 0 ? TRUE : FALSE);
+	EnableWindow(GetDlgItem(msg.hWndMain, IDC_CHECK_USE_ESCAPE_CHAR), comm.data_fmt_send == 0 ? TRUE : FALSE);
+
+	ShowWindow(msg.hEditRecv, comm.data_fmt_recv > 0);
+	ShowWindow(msg.hEditRecv2, comm.data_fmt_recv == 0);
+	SetDlgItemText(msg.hWndMain, IDC_STATIC_RECV, comm.data_fmt_recv ? "数据接收 - 16进制模式" : "数据接收 - 字符模式");
+	SetDlgItemText(msg.hWndMain, IDC_STATIC_SEND, comm.data_fmt_send ? "数据发送 - 16进制模式" : "数据发送 - 字符模式");
 
 }
 int	hardware_config(void)

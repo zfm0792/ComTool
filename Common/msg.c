@@ -202,8 +202,17 @@ int on_command(HWND hwhWndCtrl, int id, int codeNotify)
 
 	switch (id)
 	{
+		// 设置发送/接收 数据的格式
+	case IDC_RADIO_SEND_CHAR:
+	case IDC_RADIO_SEND_HEX:
+	case IDC_RADIO_RECV_CHAR:
+	case IDC_RADIO_RECV_HEX:
+	case IDC_CHECK_IGNORE_RETURN:
+	case IDC_CHECK_USE_ESCAPE_CHAR:
+		comm.set_data_fmt();
+		return 0;
 
-	case IDC_BTN_OPEN:
+	case IDC_BTN_OPEN: // 打开串口
 	{
 		if (comm.fCommOpened) {
 			if (comm.close(0))
@@ -214,7 +223,7 @@ int on_command(HWND hwhWndCtrl, int id, int codeNotify)
 		deal.update_savebtn_status();
 		return 0;
 	}
-	case IDC_BTN_SEND:
+	case IDC_BTN_SEND: // 发送命令
 		deal.do_send(0);
 		return 0;
 	}

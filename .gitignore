@@ -259,3 +259,16 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/Common/output/Dummay/vc141.idb
+/Common/output/Dummay/Common.tlog/rc.write.1.tlog
+/Common/output/Dummay/Common.tlog/rc.read.1.tlog
+/Common/output/Dummay/Common.tlog/rc.command.1.tlog
+/Common/output/Dummay/Common.tlog/link.write.1.tlog
+/Common/output/Dummay/Common.tlog/link.read.1.tlog
+/Common/output/Dummay/Common.tlog/link.command.1.tlog
+/Common/output/Dummay/Common.tlog/Common.lastbuildstate
+/Common/output/Dummay/Common.tlog/CL.write.1.tlog
+/Common/output/Dummay/Common.tlog/CL.read.1.tlog
+/Common/output/Dummay/Common.tlog/CL.command.1.tlog
+/Common/output/Dummay/Common.tlog
+/Common/output/Dummay

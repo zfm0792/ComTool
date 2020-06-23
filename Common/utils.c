@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "msg.h"
 #include "about.h"
+#include "debug.h"
 #include "memoryManage.h"
 
 struct utils_s utils;
@@ -243,10 +244,37 @@ void myassert(void* pv, char* str)
 	}
 	return;
 }
-
+// Windows ---> Linux(Standard new line format)
+// '\r\n' ----> '\n'格式
 int wstr2lstr(char* src)
 {
-	return 0;
+	char* pdst = src;
+	char* psrc = src;
+	if (pdst == NULL)
+	{
+		debug_out(("utils.wstr2lstr:src == NULL!(file:%s,line:%d)\n", __FILE__, __LINE__));
+		return 0;
+	}
+	for (;;) {
+		if (*psrc == '\r' && *(psrc + 1) && *(psrc + 1) == '\n')
+		{
+			*pdst++ = '\n';
+			psrc += 2;
+		}
+		else
+		{
+			*pdst++ = *psrc;
+			if (!*psrc)
+			{
+				break;
+			}
+			else 
+			{
+				psrc++;
+			}
+		}
+	}
+	return (unsigned int)(pdst - (unsigned int)src);
 }
 
 int check_chs(unsigned char* ba, int cb)
@@ -286,8 +314,49 @@ unsigned int remove_string_linefeed(char* str)
 	*p2 = '\0';
 	return (unsigned int)p2 - (unsigned int)str;
 }
-//
+
+/*
+解析字符串中的转义字符
+	1.若解析全部成功:
+		最高位为1,其余位为解析后的字符串长度
+	2.若解析时遇到错误:
+		最高位为0,其余位为解析直到错误时的长度
+
+*/
 unsigned int parse_string_escape_char(char* str)
 {
-	return 0;
+	char* p1 = str;
+	char* p2 = str;
+
+	while (*p2)
+	{
+		if (*p2 == '\\') {
+			p2++;
+			switch (*p2)
+			{
+				case '\\':*p1++ = '\\'; p2++; break;
+				case 'b':*p1++ = '\b'; p2++; break;
+				case 'a':*p1++ = '\a'; p2++; break;
+				case 'v':*p1++ = '\v'; p2++; break;
+				case 't':*p1++ = '\t'; p2++; break;
+				case 'n':*p1++ = '\n'; p2++; break;
+				case 'r':*p1++ = '\r'; p2++; break;
+				case '\0':
+					goto _error;
+					break;
+				default:
+					goto _error;
+			}
+		}
+		else 
+		{
+			*p1++ = *p2++;
+		}
+	}
+
+	*p1 = '\0';
+	return 0x80000000 | (unsigned int)p1 - (unsigned int)str;
+
+_error:
+	return (unsigned int)p2 - (unsigned int)str & 0x7FFFFFFF;
 }
